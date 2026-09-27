@@ -10,6 +10,40 @@ A high-performance, **zero-dependency algorithmic solver suite** and market micr
 
 ---
 
+## System Architecture
+
+```mermaid
+flowchart TD
+    subgraph MarketDataAndVenues["1. Market Data Feeds & Order Venues"]
+        FEEDS["Direct Exchange UDP Market Feeds<br>ITCH/OUCH, FAST/FIX Feeds across 5 Venues"]
+        VENUES["Fragmented Liquidity Venues<br>Exchanges, ATS Dark Pools, Single-Dealer Platforms"]
+    end
+
+    subgraph FastMatchingCore["2. Microsecond Execution & Matching Core"]
+        LOB["DeterministicMatchingEngine<br>Continuous Double Auction LOB<br>O(1) Price-Level Double-Linked Queues<br><b>471,680 Orders/Sec | 1.10 us Mean Latency</b>"]
+        ARBITRAGE["NegativeCycleArbitrageScanner<br>Bellman-Ford -log(p) with Non-Linear Slippage<br>P(V) = P_0 (1 + kappa * sqrt(V/Depth)) - AdverseSelection(V)<br><b>11.53 bps Net Edge Scanned in 0.198 ms</b>"]
+    end
+
+    subgraph OptimalExecutionAlgorithms["3. Optimal Liquidation & Inventory Control"]
+        ALMGREN["AlmgrenChrissOptimalExecution<br>Calculus-of-Variations Hyperbolic Trajectory<br>min E[I] + lambda * Var[I] s.t. x_j = sinh(kappa*(T - t_j))/sinh(kappa*T) * X_0<br><b>99.91% Variance Reduction | $4.64M Shortfall Savings</b>"]
+        AVELLANEDA["AvellanedaStoikovMarketMaker<br>Continuous-Time HJB Reservation Price Skewing<br>r(s, q, t) = s - q * gamma * sigma^2 * (T - t)<br><b>220.88 Sharpe Ratio | Delta-Neutral Inventory (q = -1)</b>"]
+    end
+
+    subgraph SmartRouting["4. Convex Smart Order Routing (SOR)"]
+        SOR["SmartOrderRouter<br>Karush-Kuhn-Tucker (KKT) Convex Allocation<br>Equalize Marginal Execution Costs across Venues<br><b>$41,461.81 (82.1 bps) Price Improvement</b>"]
+    end
+
+    FEEDS --> ARBITRAGE
+    FEEDS --> LOB
+    ARBITRAGE --> SOR
+    LOB --> AVELLANEDA
+    AVELLANEDA --> SOR
+    ALMGREN --> SOR
+    SOR --> VENUES
+```
+
+---
+
 ## 1. Executive Summary & Benchmark Telemetry
 
 | Microstructure Solver | Mathematical Formulation | Benchmark Result | Economic / Quant Impact |
